@@ -1,0 +1,55 @@
+id = "katana-online"
+name = "Katana ONLINE"
+version = "0.1.0"
+description = "Co-op and PVP lockstep over Steam. Friends only."
+kzm_spec = 1
+legacy = false
+assets = []
+
+[game]
+cleanRoot = false
+
+[depends]
+
+[conflicts]
+mods = []
+
+[lua]
+sourceEntry = "lua/main.lua"
+distEntry = "dist/entry.lua"
+priority = 60
+loadlistExtra = []
+
+[lua.hooks]
+scripts = [
+    "player_hurt",
+    "player_input",
+    "set_level",
+    "room_transition",
+]
+objects = [
+    "obj_titlemenu",
+    "obj_player",
+    "obj_enemy",
+    "obj_AI",
+]
+
+[lua.hooks.merge]
+
+[native]
+plugins = ["dist/online.dll"]
+
+[native.steam]
+mode = "auto"
+
+[patches]
+mode = "none"
+bundle = []
+
+[i18n]
+defaultLocale = ""
+fallbackLocale = ""
+
+[i18n.ui]
+
+[i18n.dialogues]

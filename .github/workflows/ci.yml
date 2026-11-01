@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mod
+
+      - uses: actions/checkout@v4
+        with:
+          repository: KatanaZeroModding/KZM
+          ref: main
+          path: kzm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: i686-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            kzm
+            mod
+
+      - name: Build kzm-cli
+        working-directory: kzm
+        run: cargo build --release -p kzm-cli
+
+      - name: Build native plugin
+        working-directory: mod
+        shell: bash
+        run: bash ./build.sh
+
+      - name: Package mod
+        working-directory: mod
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d target ]; then
+            mv target "$RUNNER_TEMP/mod-target"
+          fi
+          kzm_bin="$GITHUB_WORKSPACE/kzm/target/release/kzm.exe"
+          "$kzm_bin" build . --repo-root "$GITHUB_WORKSPACE/kzm" --no-install --no-enable
+          mkdir -p "$RUNNER_TEMP/pkg"
+          "$kzm_bin" pack . --out "$RUNNER_TEMP/pkg/katana-online.kzm"
+          if [ -d "$RUNNER_TEMP/mod-target" ]; then
+            mv "$RUNNER_TEMP/mod-target" target
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: katana-online-${{ github.sha }}
+          path: ${{ runner.temp }}/pkg/katana-online.kzm
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ runner.temp }}/pkg/katana-online.kzm

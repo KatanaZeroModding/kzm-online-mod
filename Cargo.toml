@@ -1,0 +1,24 @@
+[package]
+name = "katana-online"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+
+[lib]
+name = "online"
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[dependencies]
+sha2 = "0.10"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+  "Win32_Foundation",
+  "Win32_System_LibraryLoader",
+] }
+
+[profile.release]
+panic = "abort"
+lto = true
